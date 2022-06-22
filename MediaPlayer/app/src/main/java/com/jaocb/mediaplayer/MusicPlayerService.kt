@@ -9,6 +9,7 @@ import android.media.MediaPlayer
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
+import android.widget.Toast
 
 class MusicPlayerService : Service() {
     var mMediaPlayer: MediaPlayer? = null
@@ -76,8 +77,44 @@ class MusicPlayerService : Service() {
 
         startForeground(1, notification)
     }
-    fun isPlaying() {}  // 재생 중인지 확인
-    fun play() {}   // 재생
-    fun pause() {}  // 일시정지
-    fun stop() {}   // 완전 정지
+    //  재생되고 있는지 확인
+    fun isPlaying() : Boolean {
+        return (mMediaPlayer != null && mMediaPlayer?.isPlaying ?: false)
+    }
+    // 1. 음악 재생
+    fun play() {
+        if(mMediaPlayer == null) {
+            // 음악 파일의 리소스를 가져와 미디어 플레이어 객체를 할당
+            mMediaPlayer = MediaPlayer.create(this, R.raw.Snitch)
+
+            mMediaPlayer?.setVolume(1.0f, 1.0f); // 볼륨을 지정
+            mMediaPlayer?.isLooping = true       // 반복재생 여부를 정해줍니다.
+            mMediaPlayer?.start()                // 음악을 재생합니다.
+        } else { // 2. 음악 재생 중인 경우
+            if(mMediaPlayer!!.isPlaying) {
+                Toast.makeText(this, "이미 음악이 실행 중입니다.",
+                    Toast.LENGTH_SHORT).show()
+            } else {
+                mMediaPlayer?.start()	          // 음악을 재생합니다.
+            }
+        }
+    }
+    // 3. 일시 정지
+    fun pause() {
+        mMediaPlayer?.let {
+            if(it.isPlaying) {
+                it.pause()    // 음악을 일시정지 합니다.
+            }
+        }
+    }
+    // 4. 재생 중지
+    fun stop() {
+        mMediaPlayer?.let {
+            if(it.isPlaying) {
+                it.stop()     // 음악을 멈춥니다.
+                it.release()  // 미디어 플레이어에 할당된 자원을 해제시켜줍니다.
+                mMediaPlayer = null
+            }
+        }
+    }
 }
