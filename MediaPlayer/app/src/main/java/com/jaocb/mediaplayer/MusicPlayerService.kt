@@ -62,7 +62,7 @@ class MusicPlayerService : Service() {
             val notificationManager = getSystemService(NOTIFICATION_SERVICE)
                 as NotificationManager
             val mChannel = NotificationChannel( // 알림 채널 생성
-                "CHANNERL_ID",
+                "CHANNEL_ID",
                 "CHANNEL_NAME",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
@@ -85,7 +85,7 @@ class MusicPlayerService : Service() {
     fun play() {
         if(mMediaPlayer == null) {
             // 음악 파일의 리소스를 가져와 미디어 플레이어 객체를 할당
-            mMediaPlayer = MediaPlayer.create(this, R.raw.Snitch)
+            mMediaPlayer = MediaPlayer.create(this, R.raw.chocolate)
 
             mMediaPlayer?.setVolume(1.0f, 1.0f); // 볼륨을 지정
             mMediaPlayer?.isLooping = true       // 반복재생 여부를 정해줍니다.
