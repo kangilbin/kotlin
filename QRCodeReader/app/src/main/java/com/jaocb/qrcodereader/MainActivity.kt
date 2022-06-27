@@ -2,16 +2,20 @@ package com.jaocb.qrcodereader
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.google.common.util.concurrent.ListenableFuture
 import com.jaocb.qrcodereader.databinding.ActivityMainBinding
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
     private val PERMISSION_REQUEST_CODE = 1
@@ -20,6 +24,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding : ActivityMainBinding  // 1.바인딩 변수 생성
     private lateinit var cameraProviderFuture : ListenableFuture<ProcessCameraProvider>
 
+    private var isDetected = false
+
+    override fun onResume() {
+        super.onResume()
+        isDetected = false
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -55,20 +65,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    // 3.미리보기와 이미지 분석 시작
+    // 미리보기와 이미지 분석 시작
     fun startCamera() {
         cameraProviderFuture = ProcessCameraProvider.getInstance(this)
         cameraProviderFuture.addListener(Runnable {
             val cameraProvider = cameraProviderFuture.get()
 
-            val preview = getPreview()  // 미리보기 객체 가져오기
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA // 후면 카메라 선택
+            val preview = getPreview()
+            val imageAnalysis = getImageAnalysis()  // 2)
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-            // 미리보기 기능 선택
-            cameraProvider.bindToLifecycle(this, cameraSelector, preview)
+            cameraProvider.bindToLifecycle(this, cameraSelector, preview,
+                imageAnalysis)  // 3)
         }, ContextCompat.getMainExecutor(this))
     }
-
     // 4.미리보기 객체 반환
     fun getPreview() : Preview {
         val preview : Preview = Preview.Builder().build() // Preview 객체 생성
@@ -79,5 +89,26 @@ class MainActivity : AppCompatActivity() {
         PreviewView의 SurfaceProvider를 줍니다.
         */
         return preview
+    }
+
+    fun getImageAnalysis() : ImageAnalysis {
+        val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+        val imageAnalysis = ImageAnalysis.Builder().build()
+
+        imageAnalysis.setAnalyzer(cameraExecutor,
+            QRCodeAnalyzer(object : OnDetectListener {
+                override fun onDetect(msg: String) {
+                    if (!isDetected) {
+                        isDetected = true   // 데이터가 감지외었으며로 true로 변경
+                        val intent = Intent(
+                            this@MainActivity,
+                            ResultActivity::class.java
+                        )
+                        intent.putExtra("msg", msg)
+                        startActivity(intent)
+                    }
+                }
+            }))
+        return imageAnalysis
     }
 }
