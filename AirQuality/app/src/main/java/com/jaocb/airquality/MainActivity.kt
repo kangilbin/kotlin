@@ -7,6 +7,8 @@ import android.app.Dialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Address
+import android.location.Geocoder
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -18,6 +20,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.jaocb.airquality.databinding.ActivityMainBinding
+import java.io.IOException
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,6 +37,9 @@ class MainActivity : AppCompatActivity() {
     // 위치 서비스 요청 시 필요한 런처
     lateinit var  getGPSPermissionLauncher: ActivityResultLauncher<Intent>
 
+    // 위도와 경도를 가져올 때 필요
+    lateinit var locationProvider: LocationProvider
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -40,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         checkAllPermissions()   // 권한 확인
+        updateUI()
     }
 
     private fun checkAllPermissions() {
@@ -97,6 +105,7 @@ class MainActivity : AppCompatActivity() {
             }
             if(checkResult) {
                 // 위치값을 가져 올 수 있음
+                updateUI()
             } else {
                 // 퍼미션이 거부되었다면 앱 종료
                 Toast.makeText(
@@ -151,4 +160,61 @@ class MainActivity : AppCompatActivity() {
             })
         builder.create().show() // 다이얼로그 생성 및 보여주기
     }
+
+    private fun updateUI() {
+        locationProvider = LocationProvider(this@MainActivity)
+
+        // 위도와 경도 정보를 가져옵니다.
+        val latitude: Double = locationProvider.getLocationLatitude()
+        val longitude: Double = locationProvider.getLocationLongitude()
+
+        if (latitude != 0.0 || longitude != 0.0) {
+            // 1. 현재 위치를 가져오고 UI 업데이트
+            // 현재 위치를 가져오기
+            val address = getCurrentAddress(latitude, longitude)
+            // 주소가 null이 아닐 경우 UI 업데이트
+            address?.let {
+                binding.tvLocationTitle.text = "${it.thoroughfare}" // 예시 : 역삼 1동
+                binding.tvLocationSubtitle.text = "${it.countryName}"
+                "${it.adminArea}"   // 예 : 대한민국 서울 특별시
+            }
+        } else {
+            Toast.makeText(
+                this@MainActivity,
+                "위도, 경도 정보를 가져올 수 없습니다. 새로고침을 눌러주세요.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    fun getCurrentAddress(latitude: Double, longitude: Double) : Address? {
+        val geocoder = Geocoder(this, Locale.getDefault())
+        // Address 객체는 주소와 관련된여러 정보를 가지고 있습니다.
+        // android.location.Address 패키지 참고.
+        val addresses: List<Address>?
+
+        addresses = try {
+            // Geocoder 객체를 이용하여 위도와 경도로부터 리스트를 가져옵니다.
+            geocoder.getFromLocation(latitude, longitude, 7)
+        } catch (ioException: IOException) {
+            Toast.makeText(this, "지오코더 서비스 사용 불가합니다.",
+                Toast.LENGTH_LONG).show()
+            return null
+        } catch (illegalArgumentException: IllegalAccessException) {
+            Toast.makeText(this, "잘못된 위도, 경도 입니다",
+                Toast.LENGTH_LONG).show()
+            return null
+        }
+
+        // 에러는 아니지만 주소가 발견되지 않는 경우
+        if(addresses == null || addresses.size == 0) {
+            Toast.makeText(this, "주소가 발견되지 않았습니다.",
+                Toast.LENGTH_LONG).show()
+            return null
+        }
+
+        val address: Address = addresses[0]
+        return address
+    }
+
 }
