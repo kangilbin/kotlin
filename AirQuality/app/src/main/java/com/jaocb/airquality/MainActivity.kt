@@ -20,7 +20,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.jaocb.airquality.databinding.ActivityMainBinding
+import com.jaocb.airquality.retrofit.AirQualityResponse
+import com.jaocb.airquality.retrofit.AirQualityService
+import com.jaocb.airquality.retrofit.RetrofitConnection
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.create
 import java.io.IOException
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
@@ -48,6 +58,7 @@ class MainActivity : AppCompatActivity() {
 
         checkAllPermissions()   // 권한 확인
         updateUI()
+        setRefreshButton()
     }
 
     private fun checkAllPermissions() {
@@ -178,6 +189,9 @@ class MainActivity : AppCompatActivity() {
                 binding.tvLocationSubtitle.text = "${it.countryName}"
                 "${it.adminArea}"   // 예 : 대한민국 서울 특별시
             }
+
+            // 2. 현재 미세먼지 농도 가져오고 UI 업데이트
+            getAirQualityData(latitude, longitude)
         } else {
             Toast.makeText(
                 this@MainActivity,
@@ -216,5 +230,84 @@ class MainActivity : AppCompatActivity() {
         val address: Address = addresses[0]
         return address
     }
+    /**
+     * 레트로핏 클래스를 이용하여 미세먼지 오염 정보를 가져옵니다.
+     */
+    private fun getAirQualityData(latitude: Double, longitude: Double) {
+        // 레트로핏 객체를 이용해 AirQualityService 인터페이스 구현체를 가져올 수 있음
+        val retrofitAPI = RetrofitConnection.getInstance().create(AirQualityService::class.java)
 
+        retrofitAPI.getAirQualityData(  // 2)
+            latitude.toString(),
+            longitude.toString(),
+            "ad57e475-aa81-4e33-bc22-abac6af0678b" // API key 입력
+        ).enqueue(object : Callback<AirQualityResponse> {   // 3)
+            override fun onResponse(
+                call: Call<AirQualityResponse>,
+                response: Response<AirQualityResponse>
+            ) {
+                // 정상저인 Response가 왔다면 UI 업데이트
+                if (response.isSuccessful) {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "최신 정보 업데이트 완료!", Toast.LENGTH_SHORT
+                    ).show()
+                    // response.body()가  null이 아니면 updateAirUI()
+                    response.body()?.let { updateAirUI(it) }
+                } else {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "업데이트에 실패했습니다.", Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
+            override fun onFailure(call: Call<AirQualityResponse>, t: Throwable) {
+                t.printStackTrace()
+                Toast.makeText(this@MainActivity, "업데이트에 실패했습니다.",
+                Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
+    /**
+     * 가져온 데이터 정보를 바탕으로 화면 업데이트
+     */
+    private fun updateAirUI(airQualityData: AirQualityResponse){
+        val pollutionData = airQualityData.data.current.pollution
+
+        // 수치 지정(메인 화면 가운데 숫자)
+        binding.tvCount.text = pollutionData.aqius.toString()
+
+        // 측정된 날짜 지정                                             1)
+        val dateTime =
+            ZonedDateTime.parse(pollutionData.ts).withZoneSameInstant(
+                ZoneId.of("Asia/Seoul"))
+                .toLocalDateTime()
+        val dateFormatter: DateTimeFormatter = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm")
+
+        binding.tvCheckTime.text = dateTime.format(dateFormatter).toString()
+
+        when (pollutionData.aqius) {                // 2)
+            in 0..50 -> {
+                binding.tvTitle.text = "좋음"
+                binding.imgBg.setImageResource(R.drawable.bg_good)
+            }
+            in 51..150 -> {
+                binding.tvTitle.text = "보통"
+                binding.imgBg.setImageResource(R.drawable.bg_soso)
+            }
+            in 151..200 -> {
+                binding.tvTitle.text = "나쁨"
+                binding.imgBg.setImageResource(R.drawable.bg_bad)
+            }
+            else -> {
+                binding.tvTitle.text = "매우 나쁨"
+                binding.imgBg.setImageResource(R.drawable.bg_worst)
+            }
+        }
+    }
+    private fun setRefreshButton() {
+        binding.btnRefresh.setOnClickListener { updateUI() }
+    }
 }
