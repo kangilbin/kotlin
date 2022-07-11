@@ -139,4 +139,18 @@
         app:layout_constraintTop_toBottomOf="@+id/tv_check_time"
         app:srcCompat="@drawable/icon_refresh" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:layout_marginEnd="23dp"
+        android:backgroundTint="@color/orange"
+        app:srcCompat="@drawable/icon_map"
+        app:borderWidth="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@color/white"
+        tools:ignore="SpeakableTextPresentCheck" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

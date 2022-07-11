@@ -14,6 +14,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
@@ -36,6 +38,9 @@ import java.util.*
 class MainActivity : AppCompatActivity() {
 
     lateinit var  binding: ActivityMainBinding
+    // 위도와 경도를 저장할 객체 변수 선언
+    var latitude: Double = 0.0
+    var longitude: Double = 0.0
 
     // 런타임 권한 요청 시 필요한 요청 코드
     private val PERMISSIONS_REQUEST_CODE = 100
@@ -50,16 +55,40 @@ class MainActivity : AppCompatActivity() {
     // 위도와 경도를 가져올 때 필요
     lateinit var locationProvider: LocationProvider
 
+    var startMapActivityResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult(),
+        object : ActivityResultCallback<ActivityResult> {
+            override fun onActivityResult(result: ActivityResult?) {
+                if(result?.resultCode ?: 0 == Activity.RESULT_OK) {
+                    latitude = result?.data?.getDoubleExtra("latitude", 0.0) ?: 0.0
+                    longitude = result?.data?.getDoubleExtra("longitude", 0.0) ?: 0.0
+                    updateUI()
+                }
+            }
+        })
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)   // 1)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         checkAllPermissions()   // 권한 확인
         updateUI()
         setRefreshButton()
+        setFab()
     }
+
+    private fun setFab() {
+        binding.fab.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java)
+            intent.putExtra("currentLat", latitude)
+            intent.putExtra("currentLng", longitude)
+            startMapActivityResult.launch(intent)   // 지도 페이지로 이동하고, 등록해둔
+                                                    // onAcitivityResult 콜백에 보낸 값이 전달된다.
+        }
+    }
+
 
     private fun checkAllPermissions() {
         // 1. 위치 서비스(GPS)가 켜져있는지 확인
@@ -70,7 +99,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun isLocationServicesAvailable() : Boolean {   // 2)
+    fun isLocationServicesAvailable() : Boolean {
         val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 
         return (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
@@ -95,7 +124,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onRequestPermissionsResult(    // 3)
+    override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
@@ -128,7 +157,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-    private fun showDialogForLoactionServiceSetting() { // 4)
+    private fun showDialogForLoactionServiceSetting() {
         // 먼저 ActivityResultLauncher를 설정해줍니다. 이 런처를 이용하여 결과값을
         // 반환해야 하는 인텐트를 실행할 수 있습니다.
         getGPSPermissionLauncher = registerForActivityResult(
@@ -176,8 +205,10 @@ class MainActivity : AppCompatActivity() {
         locationProvider = LocationProvider(this@MainActivity)
 
         // 위도와 경도 정보를 가져옵니다.
-        val latitude: Double = locationProvider.getLocationLatitude()
-        val longitude: Double = locationProvider.getLocationLongitude()
+        if (latitude == 0.0 || longitude == 0.0) {
+            latitude = locationProvider.getLocationLatitude()
+            longitude = locationProvider.getLocationLongitude()
+        }
 
         if (latitude != 0.0 || longitude != 0.0) {
             // 1. 현재 위치를 가져오고 UI 업데이트
@@ -237,11 +268,11 @@ class MainActivity : AppCompatActivity() {
         // 레트로핏 객체를 이용해 AirQualityService 인터페이스 구현체를 가져올 수 있음
         val retrofitAPI = RetrofitConnection.getInstance().create(AirQualityService::class.java)
 
-        retrofitAPI.getAirQualityData(  // 2)
+        retrofitAPI.getAirQualityData(
             latitude.toString(),
             longitude.toString(),
             "ad57e475-aa81-4e33-bc22-abac6af0678b" // API key 입력
-        ).enqueue(object : Callback<AirQualityResponse> {   // 3)
+        ).enqueue(object : Callback<AirQualityResponse> {
             override fun onResponse(
                 call: Call<AirQualityResponse>,
                 response: Response<AirQualityResponse>
@@ -278,7 +309,7 @@ class MainActivity : AppCompatActivity() {
         // 수치 지정(메인 화면 가운데 숫자)
         binding.tvCount.text = pollutionData.aqius.toString()
 
-        // 측정된 날짜 지정                                             1)
+        // 측정된 날짜 지정
         val dateTime =
             ZonedDateTime.parse(pollutionData.ts).withZoneSameInstant(
                 ZoneId.of("Asia/Seoul"))
@@ -288,7 +319,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.tvCheckTime.text = dateTime.format(dateFormatter).toString()
 
-        when (pollutionData.aqius) {                // 2)
+        when (pollutionData.aqius) {
             in 0..50 -> {
                 binding.tvTitle.text = "좋음"
                 binding.imgBg.setImageResource(R.drawable.bg_good)
