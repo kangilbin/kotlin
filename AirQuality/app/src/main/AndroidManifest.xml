@@ -27,7 +27,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3001608230251687~2809831636" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDymwJkueReDBfLOy-rhKCvjxLyaYtt3A8" />
