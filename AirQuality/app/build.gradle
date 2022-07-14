@@ -9,7 +9,7 @@ android {
     compileSdk 31
 
     defaultConfig {
-        applicationId "com.jaocb.airquality"
+        applicationId "com.jacob.airquality"
         minSdk 26
         targetSdk 31
         versionCode 1

@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.jaocb.airquality">
+    package="com.jacob.airquality">
     <!-- Internet Permission -->
     <uses-permission android:name="android.permission.INTERNET" /> <!-- GPS & Location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher_new"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher_new_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AirQuality">
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false"/>
         <activity
-            android:name=".MapActivity"
+            android:name="com.jacob.airquality.MapActivity"
             android:exported="true" />
         <activity
-            android:name=".MainActivity"
+            android:name="com.jacob.airquality.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
