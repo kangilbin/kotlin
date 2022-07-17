@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import android.widget.Toast
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jacob.novelview.DTO.LoadDTO
 import com.jacob.novelview.adapter.LoadAdapter
@@ -26,6 +27,10 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
         setContentView(view)
 
         val recyclerView =  binding.recyclerView
+        val dividerItemDecoration =  DividerItemDecoration(this,LinearLayoutManager.VERTICAL)
+
+        dividerItemDecoration.setDrawable(this.getResources().getDrawable(R.drawable.recyclerview_divider))
+        recyclerView.addItemDecoration(dividerItemDecoration);
         recyclerView.layoutManager = LinearLayoutManager(this,LinearLayoutManager.VERTICAL, false)
         recyclerView.setHasFixedSize(true)
         recyclerView.adapter = LoadAdapter(list,this)
@@ -62,7 +67,6 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
     override fun onItemClick(loadDTO: LoadDTO) {
         var filePath = File(loadDTO.path)
         var files = filePath?.listFiles()
-
         try {
             if(filePath.isDirectory){
                 list.clear();
@@ -71,9 +75,10 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
                 }
                 if(files != null){
                     for(childFile in files){
+                        Log.d("파일","확장자 : " + childFile.extension)
                         if(childFile.isDirectory){
                             list.add(LoadDTO(R.drawable.ic_folder,childFile.name,childFile.absolutePath))
-                        } else if (childFile.extension == "txt") {
+                        } else if (childFile.extension == "TXT") {
                             list.add(LoadDTO(R.drawable.ic_txt,childFile.name,childFile.absolutePath))
                         } else if(childFile.extension == "zip"){
                             list.add(LoadDTO(R.drawable.ic_zip,childFile.name,childFile.absolutePath))
@@ -83,9 +88,9 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
                     Toast.makeText(this, "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
                 }
                 recyclerView.adapter = LoadAdapter(list, this)
-            } else if (filePath.extension == "txt") {
+            } else if (filePath.extension == "TXT") {
                 saveFile(filePath.inputStream())
-                Log.d("파일","txt")
+                Log.d("파일","TXT")
             } else if(filePath.extension == "zip") {
                 saveFile(filePath.inputStream())
                 Log.d("파일","zip")

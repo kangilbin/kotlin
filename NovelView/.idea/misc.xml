@@ -12,6 +12,7 @@
         <entry key="..\:/kotlin/NovelView/app/src/main/res/drawable/ic_storage.xml" value="0.30416666666666664" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/drawable/ic_text.xml" value="0.2526041666666667" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/drawable/main_button.xml" value="0.31851851851851853" />
+        <entry key="..\:/kotlin/NovelView/app/src/main/res/drawable/recyclerview_divider.xml" value="0.31979166666666664" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/layout/activity_file_load.xml" value="0.28541666666666665" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/layout/activity_main.xml" value="0.33" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/layout/file_list_item" value="0.26666666666666666" />
@@ -24,6 +25,7 @@
         <entry key="..\:/kotlin/NovelView/app/src/main/res/layout/item.xml" value="0.3359375" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/layout/load_item.xml" value="0.23229166666666667" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/layout/provider_paths.xml" value="0.17864583333333334" />
+        <entry key="..\:/kotlin/NovelView/app/src/main/res/layout/recyclerview_divider.xml" value="0.2994791666666667" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.2526041666666667" />
         <entry key="..\:/kotlin/NovelView/app/src/main/res/xml/file_paths.xml" value="0.17864583333333334" />
       </map>
