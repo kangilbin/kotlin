@@ -15,7 +15,7 @@
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
         <activity
             android:name=".FileLoad"
-            android:exported="true" />
+            android:theme="@style/Theme.AppCompat.DayNight.Dialog.Alert"/>
         <activity
             android:name=".MainActivity"
             android:exported="true">
