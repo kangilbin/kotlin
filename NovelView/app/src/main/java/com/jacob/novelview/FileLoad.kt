@@ -1,5 +1,6 @@
 package com.jacob.novelview
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
@@ -14,11 +15,15 @@ import kotlinx.android.synthetic.main.activity_file_load.*
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
     private lateinit var binding : ActivityFileLoadBinding
+    private lateinit var root : File
+    private lateinit var type : String
     var list:ArrayList<LoadDTO> = ArrayList()
-    val root = File(Environment.getExternalStorageDirectory().absolutePath)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,14 +31,22 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
         val view = binding.root
         setContentView(view)
 
-        val recyclerView =  binding.recyclerView
-        val dividerItemDecoration =  DividerItemDecoration(this,LinearLayoutManager.VERTICAL)
 
-        dividerItemDecoration.setDrawable(this.getResources().getDrawable(R.drawable.recyclerview_divider))
-        recyclerView.addItemDecoration(dividerItemDecoration);
+        type = intent.getStringExtra("storage").toString()
+        if(type == "external"){
+            root = File(Environment.getExternalStorageDirectory().absolutePath)
+        } else {
+            root = File(filesDir.absolutePath)
+        }
+
+//        이상하게 리사이클러뷰 구분선이 액티비티에 커스텀 테마를 적용하게되면 적용 안됨
+//        val dividerItemDecoration =  DividerItemDecoration(this,LinearLayoutManager.VERTICAL)
+//        dividerItemDecoration.setDrawable(this.getResources().getDrawable(R.drawable.recyclerview_divider))
+//        recyclerView.addItemDecoration(dividerItemDecoration);
+        val recyclerView =  binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(this,LinearLayoutManager.VERTICAL, false)
         recyclerView.setHasFixedSize(true)
-        recyclerView.adapter = LoadAdapter(list,this)
+        recyclerView.adapter = LoadAdapter(list,this, type)
 
         buildDisplayData()
     }
@@ -55,11 +68,9 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
         }
     }
     // 외부 저장소 -> 내부 저장소로 복사
-    private fun saveFile(inputStream: InputStream) {
-        val path = filesDir.absolutePath
-
-        File(path).outputStream().use { fileOutput ->
-            inputStream.copyTo(fileOutput)
+    private fun saveFile(file:File) {
+        this.openFileOutput(file.name, Context.MODE_PRIVATE).use {
+            it.write(file.readBytes())
         }
     }
 
@@ -75,7 +86,6 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
                 }
                 if(files != null){
                     for(childFile in files){
-                        Log.d("파일","확장자 : " + childFile.extension)
                         if(childFile.isDirectory){
                             list.add(LoadDTO(R.drawable.ic_folder,childFile.name,childFile.absolutePath))
                         } else if (childFile.extension == "TXT") {
@@ -87,13 +97,11 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
                 } else {
                     Toast.makeText(this, "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
                 }
-                recyclerView.adapter = LoadAdapter(list, this)
+                recyclerView.adapter = LoadAdapter(list, this, type)
             } else if (filePath.extension == "TXT") {
-                saveFile(filePath.inputStream())
-                Log.d("파일","TXT")
+                saveFile(filePath)
             } else if(filePath.extension == "zip") {
-                saveFile(filePath.inputStream())
-                Log.d("파일","zip")
+                saveFile(filePath)
             }
         } catch (ex: IOException) {
             ex.printStackTrace()

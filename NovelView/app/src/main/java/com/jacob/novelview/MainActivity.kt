@@ -18,8 +18,16 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // [불러오기] 클릭
         binding.btnLoad.setOnClickListener {
             var intent = Intent(this, FileLoad::class.java)
+            intent.putExtra("storage", "external")
+            startActivity(intent)
+        }
+        // [보관함] 클릭
+        binding.btnStorage.setOnClickListener {
+            var intent = Intent(this, FileLoad::class.java)
+            intent.putExtra("storage", "interal")
             startActivity(intent)
         }
 

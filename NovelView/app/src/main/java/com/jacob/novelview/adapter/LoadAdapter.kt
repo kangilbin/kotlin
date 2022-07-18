@@ -1,5 +1,6 @@
 package com.jacob.novelview.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,7 +11,8 @@ import com.jacob.novelview.R
 import kotlinx.android.synthetic.main.file_list_item.view.*
 
 
-class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad) : RecyclerView.Adapter<LoadAdapter.CustomViewHolder>() {
+class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad, var type:String) : RecyclerView.Adapter<LoadAdapter.CustomViewHolder>() {
+
     inner class CustomViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         var folderNm = itemView.tv_folder_nm
@@ -19,8 +21,15 @@ class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad) : Recycle
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CustomViewHolder {
+        var itemLayout : Int
+        if(type == "external"){
+            itemLayout = R.layout.file_list_item
+        } else {
+            itemLayout = R.layout.file_list_item2
+        }
+        Log.d("레이아웃 ","Layout :" + itemLayout)
         val itemView =
-            LayoutInflater.from(parent.context).inflate(R.layout.file_list_item, parent, false)
+            LayoutInflater.from(parent.context).inflate(itemLayout, parent, false)
         return CustomViewHolder(itemView)
     }
 
