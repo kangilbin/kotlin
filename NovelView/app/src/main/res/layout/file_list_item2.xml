@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="70dp"
+    android:layout_height="wrap_content"
     android:background="@color/fileColor">
 
     <ImageView
@@ -18,12 +18,13 @@
 
     <TextView
         android:id="@+id/tv_folder_nm"
-        android:layout_width="250dp"
-        android:layout_height="36dp"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:text="TextView"
         android:textColor="@color/white"
         android:textSize="20dp"
+        android:padding="10dp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -34,14 +35,15 @@
 
     <ImageButton
         android:id="@+id/btn_more"
-        android:layout_width="45dp"
-        android:layout_height="45dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:background="@color/fileColor"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tv_folder_nm"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_more" />
+        app:srcCompat="@drawable/ic_more"
+        tools:ignore="SpeakableTextPresentCheck" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

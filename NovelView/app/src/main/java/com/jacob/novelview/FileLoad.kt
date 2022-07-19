@@ -1,6 +1,7 @@
 package com.jacob.novelview
 
 import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
@@ -30,7 +31,6 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
         binding = ActivityFileLoadBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
-
 
         type = intent.getStringExtra("storage").toString()
         if(type == "external"){
@@ -72,36 +72,45 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
         this.openFileOutput(file.name, Context.MODE_PRIVATE).use {
             it.write(file.readBytes())
         }
+        fileRead(File(filesDir.absoluteFile, file.name))
     }
-
+    // 파일 읽기 페이지 이동
+    private fun fileRead(file:File) {
+        var intent = Intent(this, FileRead::class.java)
+        intent.putExtra("path", file.path)
+        startActivity(intent)
+        finish()
+    }
     // 폴더 클릭 이벤트
     override fun onItemClick(loadDTO: LoadDTO) {
         var filePath = File(loadDTO.path)
         var files = filePath?.listFiles()
         try {
-            if(filePath.isDirectory){
-                list.clear();
-                if(!filePath.equals(root)){
-                    list.add(LoadDTO(R.drawable.ic_folder,"...",filePath.parent))
-                }
-                if(files != null){
-                    for(childFile in files){
-                        if(childFile.isDirectory){
-                            list.add(LoadDTO(R.drawable.ic_folder,childFile.name,childFile.absolutePath))
-                        } else if (childFile.extension == "TXT") {
-                            list.add(LoadDTO(R.drawable.ic_txt,childFile.name,childFile.absolutePath))
-                        } else if(childFile.extension == "zip"){
-                            list.add(LoadDTO(R.drawable.ic_zip,childFile.name,childFile.absolutePath))
-                        }
+            if(type == "external") {
+                if(filePath.isDirectory){
+                    list.clear();
+                    if(!filePath.equals(root)){
+                        list.add(LoadDTO(R.drawable.ic_folder,"...",filePath.parent))
                     }
-                } else {
-                    Toast.makeText(this, "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
+                    if(files != null){
+                        for(childFile in files){
+                            if(childFile.isDirectory){
+                                list.add(LoadDTO(R.drawable.ic_folder,childFile.name,childFile.absolutePath))
+                            } else if (childFile.extension.toLowerCase() == "txt") {
+                                list.add(LoadDTO(R.drawable.ic_txt,childFile.name,childFile.absolutePath))
+                            } else if(childFile.extension.toLowerCase() == "zip"){
+                                list.add(LoadDTO(R.drawable.ic_zip,childFile.name,childFile.absolutePath))
+                            }
+                        }
+                    } else {
+                        Toast.makeText(this, "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                    recyclerView.adapter = LoadAdapter(list, this, type)
+                } else if (filePath.extension.toLowerCase() == "txt" || filePath.extension.toLowerCase() == "zip") {
+                    saveFile(filePath)
                 }
-                recyclerView.adapter = LoadAdapter(list, this, type)
-            } else if (filePath.extension == "TXT") {
-                saveFile(filePath)
-            } else if(filePath.extension == "zip") {
-                saveFile(filePath)
+            } else {
+                fileRead(filePath)
             }
         } catch (ex: IOException) {
             ex.printStackTrace()
