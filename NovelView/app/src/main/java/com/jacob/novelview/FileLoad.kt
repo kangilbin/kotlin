@@ -12,17 +12,22 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.jacob.novelview.DTO.LoadDTO
 import com.jacob.novelview.adapter.LoadAdapter
 import com.jacob.novelview.databinding.ActivityFileLoadBinding
+import com.jacob.novelview.db.FileDAO
+import com.jacob.novelview.db.FileDatabase
+import com.jacob.novelview.db.FileEntity
 import kotlinx.android.synthetic.main.activity_file_load.*
-import java.io.File
-import java.io.IOException
-import java.io.InputStream
+import java.io.*
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
 class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
-    private lateinit var binding : ActivityFileLoadBinding
-    private lateinit var root : File
-    private lateinit var type : String
+    lateinit var binding : ActivityFileLoadBinding
+    lateinit var root : File
+    lateinit var type : String
+    lateinit var db : FileDatabase
+    lateinit var fileDao : FileDAO
+    lateinit var fileList: ArrayList<FileEntity>
+
     var list:ArrayList<LoadDTO> = ArrayList()
 
 
@@ -31,6 +36,9 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
         binding = ActivityFileLoadBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
+
+        db = FileDatabase.getInstance(this)!!
+        fileDao = db.getFileoDAO()
 
         type = intent.getStringExtra("storage").toString()
         if(type == "external"){
@@ -69,10 +77,31 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
     }
     // 외부 저장소 -> 내부 저장소로 복사
     private fun saveFile(file:File) {
-        this.openFileOutput(file.name, Context.MODE_PRIVATE).use {
-            it.write(file.readBytes())
-        }
-        fileRead(File(filesDir.absoluteFile, file.name))
+//        this.openFileOutput(file.name, Context.MODE_PRIVATE).use {
+//            it.write(file.readBytes())
+//        }
+//        fileRead(File(filesDir.absoluteFile, file.name))
+
+        Thread {
+            val reader = BufferedReader(FileReader(file))
+            var temp:String? = ""
+            val readTxt = StringBuffer()
+
+            while (true) {
+                temp = reader.readLine()
+                if(temp == null) break
+                else readTxt.append(temp).append("\n")
+            }
+            reader.close()
+
+            fileDao.insert(FileEntity(null, file.name, readTxt.toString(), readTxt.lines().count(), 0))
+
+            runOnUiThread {
+                // UI 스레드에서 실행
+                Toast.makeText(this, "추가 되었습니다.", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }.start()
     }
     // 파일 읽기 페이지 이동
     private fun fileRead(file:File) {
