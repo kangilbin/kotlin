@@ -9,6 +9,9 @@ import com.jacob.novelview.DTO.LoadDTO
 import com.jacob.novelview.FileLoad
 import com.jacob.novelview.R
 import kotlinx.android.synthetic.main.file_list_item.view.*
+import kotlinx.android.synthetic.main.file_list_item.view.iv_type
+import kotlinx.android.synthetic.main.file_list_item.view.tv_folder_nm
+import kotlinx.android.synthetic.main.file_list_item2.view.*
 
 
 class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad, var type:String) : RecyclerView.Adapter<LoadAdapter.CustomViewHolder>() {
@@ -17,6 +20,7 @@ class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad, var type:
 
         var folderNm = itemView.tv_folder_nm
         var image = itemView.iv_type
+        var more = itemView.btn_more
 
     }
 
@@ -27,7 +31,6 @@ class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad, var type:
         } else {
             itemLayout = R.layout.file_list_item2
         }
-        Log.d("레이아웃 ","Layout :" + itemLayout)
         val itemView =
             LayoutInflater.from(parent.context).inflate(itemLayout, parent, false)
         return CustomViewHolder(itemView)
@@ -44,6 +47,9 @@ class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad, var type:
         holder.itemView.setOnClickListener {
             clickListener.onItemClick(load)
         }
+        holder.more.setOnClickListener {
+            clickListener.delItemClick(load)
+        }
     }
 
     override fun getItemCount(): Int {
@@ -52,5 +58,6 @@ class LoadAdapter(var list:List<LoadDTO>, val clickListener: FileLoad, var type:
 
     interface ClickListener {
         fun onItemClick(loadDTO: LoadDTO)
+        fun delItemClick(loadDTO: LoadDTO)
     }
 }

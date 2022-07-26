@@ -1,13 +1,10 @@
 package com.jacob.novelview
 
-import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
 import android.widget.Toast
-import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.jacob.novelview.DTO.LoadDTO
 import com.jacob.novelview.adapter.LoadAdapter
@@ -17,8 +14,6 @@ import com.jacob.novelview.db.FileDatabase
 import com.jacob.novelview.db.FileEntity
 import kotlinx.android.synthetic.main.activity_file_load.*
 import java.io.*
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 
 class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
     lateinit var binding : ActivityFileLoadBinding
@@ -26,8 +21,6 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
     lateinit var type : String
     lateinit var db : FileDatabase
     lateinit var fileDao : FileDAO
-    lateinit var fileList: ArrayList<FileEntity>
-
     var list:ArrayList<LoadDTO> = ArrayList()
 
 
@@ -42,7 +35,7 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
 
         type = intent.getStringExtra("storage").toString()
         if(type == "external"){
-            root = File(Environment.getExternalStorageDirectory().absolutePath)
+            root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
         } else {
             root = File(filesDir.absolutePath)
         }
@@ -51,10 +44,12 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
 //        val dividerItemDecoration =  DividerItemDecoration(this,LinearLayoutManager.VERTICAL)
 //        dividerItemDecoration.setDrawable(this.getResources().getDrawable(R.drawable.recyclerview_divider))
 //        recyclerView.addItemDecoration(dividerItemDecoration);
+
         val recyclerView =  binding.recyclerView
         recyclerView.layoutManager = LinearLayoutManager(this,LinearLayoutManager.VERTICAL, false)
         recyclerView.setHasFixedSize(true)
         recyclerView.adapter = LoadAdapter(list,this, type)
+
 
         buildDisplayData()
     }
@@ -63,7 +58,7 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
         var files = root?.listFiles()
 
         if(files == null){
-            list.add(LoadDTO(R.drawable.ic_folder,"...",root?.parent))
+           // list.add(LoadDTO(R.drawable.ic_folder,"...",root?.parent))
             Toast.makeText(this, "해당 경로에 파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
             return;
         }
@@ -81,7 +76,6 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
 //            it.write(file.readBytes())
 //        }
 //        fileRead(File(filesDir.absoluteFile, file.name))
-
         Thread {
             val reader = BufferedReader(FileReader(file))
             var temp:String? = ""
@@ -93,9 +87,7 @@ class FileLoad : AppCompatActivity(), LoadAdapter.ClickListener {
                 else readTxt.append(temp).append("\n")
             }
             reader.close()
-
             fileDao.insert(FileEntity(null, file.name, readTxt.toString(), readTxt.lines().count(), 0))
-
             runOnUiThread {
                 // UI 스레드에서 실행
                 Toast.makeText(this, "추가 되었습니다.", Toast.LENGTH_SHORT).show()

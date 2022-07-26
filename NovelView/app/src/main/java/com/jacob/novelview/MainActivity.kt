@@ -1,17 +1,35 @@
 package com.jacob.novelview
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.database.Cursor
+import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
+import android.os.Environment.DIRECTORY_DOWNLOADS
+import android.os.ParcelFileDescriptor
+import android.provider.OpenableColumns
+import android.util.Log
 import android.widget.Toast
 import com.gun0912.tedpermission.PermissionListener
 import com.gun0912.tedpermission.TedPermission
 import com.jacob.novelview.databinding.ActivityMainBinding
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.nio.channels.FileChannel
 
 class MainActivity : AppCompatActivity() {
     // 뷰 바인딩 설정
     private lateinit var binding : ActivityMainBinding
+    private var pfd: ParcelFileDescriptor? = null
+    private var fileInputStream: FileInputStream? = null
+    val REQ_OPEN_FILE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -22,7 +40,12 @@ class MainActivity : AppCompatActivity() {
         binding.btnLoad.setOnClickListener {
             var intent = Intent(this, FileLoad::class.java)
             intent.putExtra("storage", "external")
-            startActivity(intent)
+
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+                openFile(Uri.fromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)))
+            } else {
+                startActivity(intent)
+            }
         }
         // [보관함] 클릭
         binding.btnStorage.setOnClickListener {
@@ -30,10 +53,83 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("storage", "interal")
             startActivity(intent)
         }
-
         setPermission()
     }
+    fun openFile(pickerInitialUri: Uri) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
 
+           // putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri)
+        }
+
+        startActivityForResult(intent, REQ_OPEN_FILE)
+    }
+    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+        super.onActivityResult(requestCode, resultCode, resultData)
+        when (requestCode) {
+            REQ_OPEN_FILE -> if (requestCode == REQ_OPEN_FILE && resultCode == Activity.RESULT_OK) {
+                resultData?.data?.also { uri ->
+                    saveFile(uri)
+                }
+            }
+            else -> super.onActivityResult(requestCode, resultCode, resultData)
+        }
+
+    }
+    fun saveFile(uri: Uri){
+        val fileName = getFileName(uri)
+        try {
+            pfd = uri.let { applicationContext?.contentResolver?.openFileDescriptor(it, "r") }
+            fileInputStream = FileInputStream(pfd?.fileDescriptor)
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        }
+        var newFile: File? = null
+        if(fileName!=null) {
+            newFile = File(filesDir, fileName)
+        }
+
+        var inChannel: FileChannel? = null
+        var outChannel: FileChannel? = null
+
+        try {
+            inChannel = fileInputStream?.channel
+            outChannel = FileOutputStream(newFile).channel
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
+        }
+
+        try {
+            inChannel?.transferTo(0, inChannel.size(), outChannel)
+        } finally {
+            inChannel?.close()
+            outChannel?.close()
+            fileInputStream?.close()
+            pfd?.close()
+        }
+    }
+    fun getFileName(uri: Uri): String? {
+        var result: String? = null
+        if (uri.scheme == "content") {
+            val cursor: Cursor? = applicationContext?.contentResolver?.query(uri, null, null, null, null)
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+                }
+            } finally {
+                cursor?.close()
+            }
+        }
+        if (result == null) {
+            result = uri.path
+            val cut = result!!.lastIndexOf('/')
+            if (cut != -1) {
+                result = result.substring(cut + 1)
+            }
+        }
+        return result
+    }
     /**
      * 테드 퍼미션 설정 (권한 설정)
      */
